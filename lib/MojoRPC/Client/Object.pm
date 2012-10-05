@@ -2,9 +2,10 @@ package MojoRPC::Client::Object;
 use Mojo::Base -base;
 use MojoRPC::Client::RequestPathBuilder;
 use Want;
+use vars '$AUTOLOAD';
 
 has [qw( _class _base_url _api_key )];
-has _chain =>  MojoRPC::Client::RequestPathBuilder->new();
+has _chain => sub { MojoRPC::Client::RequestPathBuilder->new() };
 
 
 #Build up the path builder as we go along (even if its only one level)
@@ -31,7 +32,7 @@ sub _chain {
   my $self = shift;
   my $args = shift;
 
-  $self-_chain->add_to_chain($args);
+  $self->_chain->add_to_chain($args);
 
   return $self; #So that we can keep chaining
 }

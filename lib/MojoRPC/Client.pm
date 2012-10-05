@@ -4,7 +4,7 @@ use 5.010000;
 use strict;
 use warnings;
 use Mojo::Base -base;
-use MojoRPC::Client::Package;
+use MojoRPC::Client::Object;
 use MojoRPC::Client::Request;
 
 our $VERSION = '0.01';

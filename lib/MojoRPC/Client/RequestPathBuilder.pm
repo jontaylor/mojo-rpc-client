@@ -2,10 +2,11 @@ package MojoRPC::Client::RequestPathBuilder;
 use Mojo::Base -base;
 use MojoRPC::Client::MethodCall;
 use JSON::XS;
+use URI::Escape;
 
 #We use JSON here for convenience in generating the path
 
-has chain => [];
+has chain => sub { [] };
 has [qw( base_url class_name )];
 
 #Should complain if you try and add to a chain thats last item wants an array
@@ -21,7 +22,15 @@ sub add_to_chain {
 
 #Put it all together
 sub build {
-  
+  my $self = shift;
+
+  my $path = $self->base_url;
+  $path =~ s/\/+$//;
+  $path .= '/call/json/';
+  $path .= $self->class_name;
+  $path .= '/';
+  $path .= uri_escape_utf8($self->json_params);
+  return $path;
 }
 
 sub json_params {
