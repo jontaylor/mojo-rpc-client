@@ -1,0 +1,6 @@
+Revision history for Perl extension MojoRPC::Client.
+
+0.01  Fri Oct  5 13:49:49 2012
+	- original version; created by h2xs 1.23 with options
+		-AX MojoRPC::Client -b 5.10.0
+
