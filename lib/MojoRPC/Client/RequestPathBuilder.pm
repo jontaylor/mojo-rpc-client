@@ -15,7 +15,7 @@ sub add_to_chain {
   my $args = shift;
 
   push @{$self->chain}, MojoRPC::Client::MethodCall->new(
-    method_name => $args->{method_name}, parameters => $args->{parameters},
+    method => $args->{method}, parameters => $args->{parameters},
     call_type => $args->{call_type}, wants => $args->{wants}
   );
 }
@@ -37,7 +37,7 @@ sub json_params {
   my $self = shift;
   my @path = map { $_->path() } @{$self->chain};
 
-  my $json = JSON::XS->new->allow_non_ref();
+  my $json = JSON::XS->new->allow_nonref();
 
   return $json->encode(\@path);
 }
