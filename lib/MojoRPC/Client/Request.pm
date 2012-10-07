@@ -20,7 +20,6 @@ sub send_request {
 
   unless($response->is_success()) {
     carp "Request failed with " . $response->status_line;
-    return undef;
   }
 
   #$response = $self->parse_response($response);
@@ -34,13 +33,7 @@ sub parse_response {
   my $json = JSON::XS->new->allow_nonref;
   my $data = $json->decode($response->content) ;
 
-  # if($data->{class}) {
-  #   my $object = MojoRPC::Client::Object->new({  
-  #     _class => $data->{class}, _api_key => $self->api_key, _base_url => $self->base_url, _chain => $self->request_path_builder
-  #   });
-  #   return $object;
-  # }
-  return $data->{data};
+  return $data;
 }
 
 sub user_agent {

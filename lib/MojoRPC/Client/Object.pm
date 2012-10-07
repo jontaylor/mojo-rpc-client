@@ -7,20 +7,26 @@ use vars '$AUTOLOAD';
 has [qw( _class _base_url _api_key last_request )];
 has _chain => sub { MojoRPC::Client::RequestPathBuilder->new() };
 
-# Look like what the use of this wants
+sub _handle_method_call {
+  my $self = shift;
+  my $args = shift;
+  my $wants = shift;
 
-use overload
-  'nomethod' => '__catch_all';
+  #We always need the new object, either to return it, or to execute its chain
+  my $new_object = $self->_add_to_chain($args);
 
-# -> should go to the object as normal
+  unless ($wants->{'OBJECT'} ) {
+    my $result = $new_object->_execute_chain();
+    #They might want an object anyway if the data that comes back was an object
+    if($result->{class}) { 
+      #We should really do some kind of merging the params in here
+      return $new_object; 
+    }
+    return $result->{data};
+  }
 
-
-# Delegate everything else to the normal return value (which might be $self?)
-sub __catch_all {
-
+  return $new_object;
 }
-
-
 
 sub _execute_chain {
   my $self = shift;
@@ -28,6 +34,10 @@ sub _execute_chain {
   my $request_object = $self->_new_request_object();
 
   $self->last_request( $request_object->send_request() );
+
+  #Should probably raise an exception here instead... people might be expecting undef as a valid response type
+  return undef unless $self->last_request->is_success();
+
   return $request_object->parse_response($self->last_request());
 }
 
@@ -64,8 +74,16 @@ sub CLASS_METHOD {
   my $self = shift;
   my $method = shift;
 
+  my $want_object = want('OBJECT');
+  my $wantarray = wantarray;
+  my @other_params = @_;
+
   my $sub = sub {
-    return $self->_add_to_chain({ method => $method, parameters => \@_, wants => wantarray ? '@' : '$', call_type => '::'  });
+    return $self->_handle_method_call(
+      { method => $method, parameters => \@other_params, wants => $wantarray ? '@' : '$', call_type => '::'  },
+      { 'OBJECT' => $want_object,  }
+
+    );
   };
 
   if(want('CODE')) {
@@ -80,12 +98,11 @@ sub AUTOLOAD {
   my $self = shift;
   ( my $method = $AUTOLOAD ) =~ s{.*::}{};
 
-  my $chain = $self->_add_to_chain({ method => $method, parameters => \@_, wants => wantarray ? '@' : '$', call_type => '->'  });
-  # unless (want('OBJECT')) {
-  #   return $self->_execute_chain();  
-  # }
+  my $chain = $self->_handle_method_call(
+    { method => $method, parameters => \@_, wants => wantarray ? '@' : '$', call_type => '->'  },
+    { 'OBJECT' => want('OBJECT'),  }
+  );
 
-  # return $self;
   return $chain;
 }
 
