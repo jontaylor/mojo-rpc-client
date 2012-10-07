@@ -6,7 +6,6 @@ use JSON::XS;
 use LWP;
 use URI;
 use Carp;
-use MojoRPC::Client::Object;
 
 has [qw( base_url api_key request_path_builder )];
 
@@ -24,7 +23,7 @@ sub send_request {
     return undef;
   }
 
-  $response = $self->parse_response($response);
+  #$response = $self->parse_response($response);
   return $response;
 }
 
@@ -35,12 +34,12 @@ sub parse_response {
   my $json = JSON::XS->new->allow_nonref;
   my $data = $json->decode($response->content) ;
 
-  if($data->{class}) {
-    my $object = MojoRPC::Client::Object->new({  
-      _class => $data->{class}, _api_key => $self->api_key, _base_url => $self->base_url, _chain => $self->request_path_builder
-    });
-    return $object;
-  }
+  # if($data->{class}) {
+  #   my $object = MojoRPC::Client::Object->new({  
+  #     _class => $data->{class}, _api_key => $self->api_key, _base_url => $self->base_url, _chain => $self->request_path_builder
+  #   });
+  #   return $object;
+  # }
   return $data->{data};
 }
 

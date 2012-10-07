@@ -9,6 +9,16 @@ use URI::Escape;
 has chain => sub { [] };
 has [qw( base_url class_name )];
 
+sub clone {
+  my $self = shift;
+
+  return MojoRPC::Client::RequestPathBuilder->new({
+    chain => [ @{$self->chain()} ],
+    base_url => $self->base_url(),
+    class_name => $self->class_name(),
+  });
+}
+
 #Should complain if you try and add to a chain thats last item wants an array
 sub add_to_chain {
   my $self = shift;
