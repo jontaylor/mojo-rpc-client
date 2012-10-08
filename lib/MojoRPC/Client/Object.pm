@@ -1,11 +1,78 @@
 package MojoRPC::Client::Object;
 use Mojo::Base -base;
+use MojoRPC::Client;
 use MojoRPC::Client::RequestPathBuilder;
 use Want;
 use vars '$AUTOLOAD';
 
-has [qw( _class _base_url _api_key last_request )];
-has _chain => sub { MojoRPC::Client::RequestPathBuilder->new() };
+has [qw( _class _base_url _api_key last_request _object_class )];
+# has _chain => sub { MojoRPC::Client::RequestPathBuilder->new() };
+
+sub _new {
+  my $class = shift;
+  return $class->SUPER::new(@_);
+}
+
+# We don't actually want to polute this package with the new() from mojo
+sub new {
+  my $self = shift;
+
+  return $self->_handle_method_call(
+    { method => 'new', parameters => \@_, wants => wantarray ? '@' : '$', call_type => '->'  },
+    { 'OBJECT' => want('OBJECT'),  }
+  );
+}
+
+sub no_op {
+  return shift;
+}
+
+sub _client {
+  my $self = shift;
+  return MojoRPC::Client->new({
+      base_url => $self->_base_url,
+      api_key => $self->_api_key,
+      object_class => $self->_object_class
+  });
+}
+
+sub _merge {
+  my $self = shift;
+  my $attributes = shift;
+  $self->{_attributes} = [];
+  foreach my $attribute(keys %$attributes) {
+    unless($self->can($attribute)) {
+      $self->attr($attribute);
+      $self->$attribute( $attributes->{$attribute} );
+      push @{$self->{_attributes}}, $attribute;
+    }
+  }
+  return $self;
+}
+
+
+sub _chain {
+  my $self = shift;
+
+  unless($self->{_chain}) {
+
+    $self->{_chain} = MojoRPC::Client::RequestPathBuilder->new(
+      base_url => $self->_base_url,
+      class_name => $self->_class
+    );
+      
+    if($self->can('_default_chain')) {
+      my $default_chain = $self->_default_chain();
+      unless(ref($default_chain) eq "MojoRPC::Client::RequestPathBuilder") {
+        $default_chain = $default_chain->_chain() if $default_chain->can('_chain');
+      }
+      $self->{_chain} = $default_chain if $default_chain;
+    }
+
+  }
+
+  return $self->{_chain};
+}
 
 sub _handle_method_call {
   my $self = shift;
@@ -13,19 +80,32 @@ sub _handle_method_call {
   my $wants = shift;
 
   #We always need the new object, either to return it, or to execute its chain
-  my $new_object = $self->_add_to_chain($args);
+  my $new_object = $self->_clone();
+
+  $new_object->_add_to_chain($args);
 
   unless ($wants->{'OBJECT'} ) {
+    #Lets end the chain
     my $result = $new_object->_execute_chain();
-    #They might want an object anyway if the data that comes back was an object
+
+    
     if($result->{class}) { 
-      #We should really do some kind of merging the params in here
+      #We got an object back anyway, so lets give the user an object of the right kind
+      bless $new_object, MojoRPC::Client::object_class_to_use($result->{class}, $self->_object_class);
+      $new_object->init() if $new_object->can('init');
+      #$new_object->begin_new_chain() if $new_object->can('begin_new_chain');
       return $new_object; 
     }
-    return $result->{data};
+    #Need to be careful with this, do we need to do differently if the user expected an array?
+    if($args->{wants} eq "@" && ref($result->{data}) eq "ARRAY") {
+      return ( @{$result->{data}} );
+    }
+    else {
+      return $result->{data};
+    }  
   }
 
-  return $new_object;
+  return $new_object; #They wanted an object, so lets just chain (we can't make it the right type because we don't know what it is yet
 }
 
 sub _execute_chain {
@@ -44,7 +124,7 @@ sub _execute_chain {
 sub _new_request_object {
   my $self = shift;
 
-  $self->_chain->class_name($self->_class);
+  # $self->_chain->class_name($self->_class);
 
   my $request_object = MojoRPC::Client::Request->new({
     api_key => $self->_api_key,
@@ -54,20 +134,27 @@ sub _new_request_object {
   return $request_object;
 }
 
+sub _clone {
+  my $self = shift;
+
+  my $clone = MojoRPC::Client::Object->_new(
+    _class => $self->_class, #Be warned this refers to the originator of this chain
+    _api_key => $self->_api_key, 
+    _base_url => $self->_base_url, 
+    _chain => $self->_chain->clone(), #Clone the chain
+    _object_class => $self->_object_class
+  );
+
+  return $clone;
+}
+
 sub _add_to_chain {
   my $self = shift;
   my $args = shift;
 
-  my $new_object = MojoRPC::Client::Object->new(
-    _class => $self->_class, #Be warned this refers to the originator of this chain
-    _api_key => $self->_api_key, 
-    _base_url => $self->_base_url, 
-    _chain => $self->_chain->clone() #Clone the chain
-  );
+  $self->_chain->add_to_chain($args);
 
-  $new_object->_chain->add_to_chain($args);
-
-  return $new_object; #So that we can keep chaining
+  return $self; #So that we can keep chaining
 }
 
 sub CLASS_METHOD {
@@ -98,12 +185,11 @@ sub AUTOLOAD {
   my $self = shift;
   ( my $method = $AUTOLOAD ) =~ s{.*::}{};
 
-  my $chain = $self->_handle_method_call(
+  return $self->_handle_method_call(
     { method => $method, parameters => \@_, wants => wantarray ? '@' : '$', call_type => '->'  },
     { 'OBJECT' => want('OBJECT'),  }
   );
 
-  return $chain;
 }
 
 sub DESTROY {}

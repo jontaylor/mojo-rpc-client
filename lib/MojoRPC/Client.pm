@@ -9,14 +9,38 @@ use MojoRPC::Client::Request;
 
 our $VERSION = '0.01';
 
-has [qw(base_url api_key)];
+has [qw(base_url api_key )];
+has object_class => "MojoRPC::Client::Object";
+
+#A class method to work out which class to use for making objects
+sub object_class_to_use {
+  my $remote_class_name = shift;
+  my $override = shift; #Wrong way around so this works with both method incantation types
+
+  my $class_name = "MojoRPC::Client::Object";
+
+  if(ref($override) eq "HASH") {
+    $class_name = $override->{$remote_class_name} || $class_name;
+  }
+
+  if(ref($override) eq "CODE") {
+    $class_name = $override->($remote_class_name) || $class_name;
+  }
+
+  unless(ref($override)) {
+    $class_name = $override || $class_name;
+  }
+
+  eval "require $class_name";
+  return $class_name;
+}
 
 #Factory creates an Class of the specified type, which you can call methods on
 sub factory {
   my $self = shift;
   my $class = shift;
 
-  return MojoRPC::Client::Object->new({ _class => $class, _api_key => $self->api_key, _base_url => $self->base_url });
+  return MojoRPC::Client::object_class_to_use($class, $self->object_class)->_new({ _class => $class, _api_key => $self->api_key, _base_url => $self->base_url, _object_class => $self->object_class });
 }
 
 sub define {

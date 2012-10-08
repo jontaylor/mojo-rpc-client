@@ -7,13 +7,16 @@ use LWP;
 use URI;
 use Carp;
 
-has [qw( base_url api_key request_path_builder )];
+has [qw( api_key request_path_builder )];
 
 sub send_request {
   my $self = shift;
 
-  $self->request_path_builder->base_url($self->base_url); #Start to get spaghetti ish
   my $http_request = HTTP::Request->new(GET => $self->request_path_builder->build );
+
+  use Data::Dumper;
+  print STDERR Dumper $self->request_path_builder->build;
+
   $http_request->header(Authorization => "Basic " . encode_base64($self->api_key()));
 
   my $response = $self->user_agent->request($http_request);
@@ -22,7 +25,6 @@ sub send_request {
     carp "Request failed with " . $response->status_line;
   }
 
-  #$response = $self->parse_response($response);
   return $response;
 }
 
