@@ -4,13 +4,53 @@ use 5.010000;
 use strict;
 use warnings;
 use Mojo::Base -base;
-use MojoRPC::Client::Object;
+use MojoRPC::Client::Query;
 use MojoRPC::Client::Request;
 
 our $VERSION = '0.01';
 
-has [qw(base_url api_key )];
+has [qw(base_url api_key last_request )];
 has object_class => "MojoRPC::Client::Object";
+
+sub call {
+  my $self = shift;
+  my $class_name = shift;
+
+  return MojoRPC::Client::Query->new( { _class => $class_name,  _client => $self } );
+  
+}
+
+sub execute_chain {
+  my $self = shift;
+  my $chain = shift;
+
+  $chain->base_url($self->base_url);
+
+  my $request_object = MojoRPC::Client::Request->new({
+    api_key => $self->api_key,
+    request_path_builder => $chain
+  });
+
+  $self->last_request( $request_object->send_request() );
+
+  my $result = $request_object->parse_response($self->last_request());
+
+  if($result->{class}) { 
+    #We got an object back anyway, so lets give the user an object of the right kind
+    $result->{mojo_rpc_client} = $self;
+    my $new_object = MojoRPC::Client::object_class_to_use($result->{class}, $self->object_class)->_new($result);
+    $new_object->init() if $new_object->can('init');
+    return $new_object; 
+  }
+  #Need to be careful with this, do we need to do differently if the user expected an array?
+  if($chain->wants_list && ref($result->{data}) eq "ARRAY") {
+    return ( @{$result->{data}} );
+  }
+  else {
+    return $result->{data};
+  }  
+
+}
 
 #A class method to work out which class to use for making objects
 sub object_class_to_use {
@@ -35,22 +75,8 @@ sub object_class_to_use {
   return $class_name;
 }
 
-#Factory creates an Class of the specified type, which you can call methods on
-sub factory {
-  my $self = shift;
-  my $class = shift;
 
-  return MojoRPC::Client::object_class_to_use($class, $self->object_class)->_new({ _class => $class, _api_key => $self->api_key, _base_url => $self->base_url, _object_class => $self->object_class });
-}
 
-sub define {
-  my $self = shift;
-  my $class = shift;
-
-  #CREATE the package named by $class
-  #croak if the package already exists and isn't one of ours
-
-}
 
 1;
 __END__

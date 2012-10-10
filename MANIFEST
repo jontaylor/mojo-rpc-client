@@ -8,3 +8,4 @@ lib/MojoRPC/Client/MethodCall.pm
 lib/MojoRPC/Client/Object.pm
 lib/MojoRPC/Client/Request.pm
 lib/MojoRPC/Client/RequestPathBuilder.pm
+lib/MojoRPC/Client/Query.pm

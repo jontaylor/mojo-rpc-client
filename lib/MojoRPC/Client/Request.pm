@@ -12,7 +12,7 @@ has [qw( api_key request_path_builder )];
 sub send_request {
   my $self = shift;
 
-  my $http_request = HTTP::Request->new(GET => $self->request_path_builder->build );
+  my $http_request = HTTP::Request->new(GET => $self->request_path_builder->build() );
 
   use Data::Dumper;
   print STDERR Dumper $self->request_path_builder->build;
