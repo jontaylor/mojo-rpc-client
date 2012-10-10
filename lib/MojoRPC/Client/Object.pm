@@ -3,6 +3,8 @@ use Mojo::Base -base;
 use MojoRPC::Client::Query;
 
 use vars '$AUTOLOAD';
+has [qw( remote_class_name mojo_rpc_client )];
+
 
 BEGIN {
   undef &new;
@@ -37,16 +39,14 @@ sub AUTOLOAD {
   my $self = shift;
   ( my $method = $AUTOLOAD ) =~ s{.*::}{};
 
-  if($self->can('_call')) {
-    return $self->_call->$method(@_);
+  if($self->can('rpc_call')) {
+    return $self->rpc_call->$method(@_);
   }
   else {
     die "Method: $method not found";
   }
-
 }
 
 sub DESTROY {}
-
 
 1;

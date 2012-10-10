@@ -7,6 +7,15 @@ use vars '$AUTOLOAD';
 
 has [qw( _client _class )];
 
+BEGIN {
+  undef &new;
+}
+
+sub _new {
+  my $self = shift;
+  return $self->SUPER::new(@_);
+}
+
 sub _add_to_chain {
   my $self = shift;
   my $args = shift;

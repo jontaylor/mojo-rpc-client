@@ -33,7 +33,17 @@ sub parse_response {
   my $response = shift;
 
   my $json = JSON::XS->new->allow_nonref;
-  my $data = $json->decode($response->content) ;
+  my $data;
+  eval {
+    $data = $json->decode($response->content) ;
+  };
+
+  if($@) {
+    if($@ =~ /malformed JSON string/) {
+      die "Received a message from the server instead of JSON: " . $response->content;
+    }
+    die $@;
+  }
 
   return $data;
 }

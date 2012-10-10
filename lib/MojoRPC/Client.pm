@@ -16,8 +16,22 @@ sub call {
   my $self = shift;
   my $class_name = shift;
 
-  return MojoRPC::Client::Query->new( { _class => $class_name,  _client => $self } );
+  return MojoRPC::Client::Query->_new( { _class => $class_name,  _client => $self } );
   
+}
+
+sub factory {
+  my $self = shift;
+  my $remote_class_name = shift;
+  my $data = shift || {};
+
+  my $local_class_name = $self->object_class_to_use($remote_class_name);
+
+  my $object = $local_class_name->_new($data);
+  $object->mojo_rpc_client($self);
+  $object->remote_class_name( $remote_class_name );
+  $object->init() if $object->can('init');
+  return $object;
 }
 
 sub execute_chain {
@@ -37,9 +51,10 @@ sub execute_chain {
 
   if($result->{class}) { 
     #We got an object back anyway, so lets give the user an object of the right kind
-    $result->{mojo_rpc_client} = $self;
-    my $new_object = MojoRPC::Client::object_class_to_use($result->{class}, $self->object_class)->_new($result);
-    $new_object->init() if $new_object->can('init');
+    my $new_object = $self->factory( 
+      $result->{class},
+      $result
+    );
     return $new_object; 
   }
   #Need to be careful with this, do we need to do differently if the user expected an array?
@@ -54,8 +69,9 @@ sub execute_chain {
 
 #A class method to work out which class to use for making objects
 sub object_class_to_use {
+  my $self = shift;
   my $remote_class_name = shift;
-  my $override = shift; #Wrong way around so this works with both method incantation types
+  my $override = $self->object_class;
 
   my $class_name = "MojoRPC::Client::Object";
 
