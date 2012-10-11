@@ -1,17 +1,6 @@
 MojoRPC-Client version 0.01
 ===========================
 
-The README is used to introduce the module and provide instructions on
-how to install the module, any machine dependencies it may have (for
-example C compilers and installed libraries) and any other information
-that should be provided before the module is installed.
-
-A README file is required for CPAN modules since CPAN extracts the
-README file from a module distribution so that people browsing the
-archive can use it get an idea of the modules uses. It is usually a
-good idea to provide version information here so that people can
-decide whether fixes for the module are worth downloading.
-
 INSTALLATION
 
 To install this module type the following:
@@ -24,8 +13,86 @@ To install this module type the following:
 DEPENDENCIES
 
 This module requires these other modules and libraries:
+      'Want'
+      'Mojo'
+      'HTTP::Request'
+      'MIME::Base64'
+      'JSON::XS'
+      'LWP'
+      'URI'
+      'Carp'
+      'Data::Dumper'
+      'URI::Escape'
+  
+BASIC USAGE
 
-  blah blah blah
+  my $client = MojoRPC::Client->new({
+      base_url => 'http://localhost:8004',
+      api_key => 'username:password'
+  });
+
+  my $result = $client->call('Remote::Class')->a_method()->chain(1,2)->here('parameter');
+
+  #If you need to call a class method (::) then do this
+
+  my $result = $client->call('Remote::Class')->CLASS_METHOD('name_of_method')->('params','for','the','class','method')->keep_on_chaining();
+
+OBJECTS
+
+If the request you have made returns an object then you will be returned an object of type MojoRPC::Client::Object.
+Any keys returned will be made into accessors on the object (so you can go $object->id()).
+
+You cannot call further remote methods on this object unless you subclass it, this is due to the fact that without repeating 
+the entire method chain we cannot know how to get you the same object again.
+
+SUBCLASSING
+
+Make a new class that inherits from MojoRPC::Client::Object.
+Define a subroutine called rpc_call which defines how we retrieve this object directly.
+
+Example
+
+  package MojoRPC::Client::Object::MyObject;
+  use Mojo::Base 'MojoRPC::Client::Object';
+
+  has [ 'id' ];
+
+  #If we have an ID this object is in the DB already, so lets get it, else its a new object so just call new
+  # calling no_op() at the end of the chain is important else this will get executed immediately and not when a method is called.
+  sub rpc_call {
+    my $self = shift;
+
+    if($self->id()) { #any method you call here must be a valid method
+      return $self->mojo_rpc_client->call($self->remote_class_name)->new()->find($self->id())->no_op();
+    }
+    else {
+      return $self->mojo_rpc_client->call($self->remote_class_name)->no_op();
+    }
+  }
+
+With that in place you can now call methods on objects returned by the call() method above.
+
+LETTING MojoRPC::Client know about your classes
+
+Modify your call to new
+
+   my $client = MojoRPC::Client->new({
+      base_url => 'http://localhost:8004',
+      api_key => 'username:password',
+      object_class => $my_methods
+    });
+
+  #object_class can either be 
+  # - a string specifying what to instantiate results as
+  # - a hash of 'Remote::Class' => 'Your::Class'
+  # - a subref that takes the remote class as the only param and returns a string representing the local class to make
+
+HOW TO INSTANTIATE YOUR CLASS WITHOUT DOING A CALL
+
+If you need to instantiate your class, but don't need to perform a remote call yet you can use the factory
+
+  $client->factory('Remote::Class', { any => params, go => here });
+  
 
 COPYRIGHT AND LICENCE
 
