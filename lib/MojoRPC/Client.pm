@@ -15,10 +15,23 @@ has object_class => "MojoRPC::Client::Object";
 sub call {
   my $self = shift;
   my $class_name = shift;
+  my $sub_ref = shift;
 
-  return MojoRPC::Client::Query->_new( { _class => $class_name,  _client => $self } );
-  
+  if(wantarray) {
+    my @values = $sub_ref->(MojoRPC::Client::Query->_new( { _class => $class_name,  _client => $self } ));
+    return @values;
+  } else {
+    my $value  = $sub_ref->(MojoRPC::Client::Query->_new( { _class => $class_name,  _client => $self } ));
+    return $value;
+  }
 }
+
+# sub call {
+#    my $self = shift;
+#    my $class_name = shift;
+
+#    return MojoRPC::Client::Query->_new( { _class => $class_name,  _client => $self } );
+# }
 
 sub factory {
   my $self = shift;

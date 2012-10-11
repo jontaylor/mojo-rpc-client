@@ -55,7 +55,7 @@ sub AUTOLOAD {
   ( my $method = $AUTOLOAD ) =~ s{.*::}{};
 
   if($self->can('rpc_call')) {
-    return $self->_rpc_call($method, wantarray, @_);
+    return $self->_rpc_call($method, @_);
   }
   else {
     die "Method: $method not found";
@@ -76,6 +76,16 @@ sub _rpc_call {
     my $response = $self->rpc_call->$method(@_);
     return $response;
   }
+}
+
+sub _rpc_call {
+  my $self = shift;
+  my $method = shift;
+  my $wantarray = shift;
+
+  # return $self->mojo_rpc_client->call($self->remote_class_name, $self->rpc_call->$method(@_) );
+  return $self->rpc_call($self->mojo_rpc_client)
+
 }
 
 sub DESTROY {}
