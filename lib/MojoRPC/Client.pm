@@ -27,10 +27,11 @@ sub factory {
 
   my $local_class_name = $self->object_class_to_use($remote_class_name);
 
-  my $object = $local_class_name->_new($data);
+  my $object = $local_class_name->_new();
   $object->mojo_rpc_client($self);
   $object->remote_class_name( $remote_class_name );
-  $object->init() if $object->can('init');
+  $object->init($data) if $object->can('init');
+
   return $object;
 }
 
@@ -53,7 +54,7 @@ sub execute_chain {
     #We got an object back anyway, so lets give the user an object of the right kind
     my $new_object = $self->factory( 
       $result->{class},
-      $result
+      $result->{data}
     );
     return $new_object; 
   }
