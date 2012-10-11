@@ -15,6 +15,18 @@ sub _new {
   return $self->SUPER::new(@_);
 }
 
+sub _new_array_of_objects {
+  my $self = shift;
+  my $objects = shift;
+  my $class_name = shift || $self->remote_class_name;
+
+  @$objects = map { 
+    $self->mojo_rpc_client->factory($class_name, $_)
+  } @$objects;
+
+  return @$objects;
+}
+
 sub init {
   my $self = shift;
 
