@@ -44,7 +44,7 @@ sub no_op {
   shift
 }
 
-#Support class methods
+#Support class methods - The want object part might need to move inside the sub ref - If you get chaining bugs look there first
 sub CLASS_METHOD {
   my $self = shift;
   my $method = shift;
@@ -54,6 +54,8 @@ sub CLASS_METHOD {
   my @other_params = @_;
 
   my $sub = sub {
+    @other_params = (@other_params, @_);
+
     return $self->_handle_method_call(
       { method => $method, parameters => \@other_params, wants => $wantarray ? '@' : '$', call_type => '::'  },
       { 'OBJECT' => $want_object,  }

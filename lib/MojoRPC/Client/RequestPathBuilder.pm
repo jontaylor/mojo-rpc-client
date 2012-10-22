@@ -30,13 +30,22 @@ sub add_to_chain {
 sub build {
   my $self = shift;
 
+  #Get or POST?
+  my $json_params = uri_escape_utf8($self->json_params);
+
   my $path = $self->base_url;
   $path =~ s/\/+$//;
   $path .= '/call/json/';
   $path .= $self->class_name;
-  $path .= '/';
-  $path .= uri_escape_utf8($self->json_params);
-  return $path;
+
+  if(length($json_params) < 2000) {
+    $path .= '/';
+    $path .= $json_params;
+    return $path;    
+  }
+  else {
+    return ($path, $json_params);
+  }
 }
 
 sub json_params {
@@ -44,8 +53,9 @@ sub json_params {
   my @path = map { $_->path() } @{$self->chain};
 
   my $json = JSON::XS->new->allow_nonref();
+  my $encoded_json = $json->encode(\@path);
 
-  return $json->encode(\@path);
+  return $encoded_json;
 }
 
 1;

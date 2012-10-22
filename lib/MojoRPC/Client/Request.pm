@@ -6,16 +6,31 @@ use JSON::XS;
 use LWP;
 use URI;
 use Carp;
+use Encode qw(encode);
 
-has [qw( api_key request_path_builder )];
+has [qw( api_key request_path_builder debug)];
 
 sub send_request {
   my $self = shift;
 
-  my $http_request = HTTP::Request->new(GET => $self->request_path_builder->build() );
+  my ($path, $post_params) = $self->request_path_builder->build();
+  my $http_request = HTTP::Request->new();
+  $http_request->uri($path);
 
-  use Data::Dumper;
-  print STDERR Dumper $self->request_path_builder->build;
+  if($post_params) {
+    $http_request->method('POST');
+    #Below should be converted to a string of bytes
+    $http_request->content("params=$post_params");
+    $http_request->header("Content-Type" => 'application/x-www-form-urlencoded');
+  }
+  else {
+    $http_request->method('GET');
+  }
+
+  if($self->debug) {
+    use Data::Dumper;
+    print STDERR Dumper $path;
+  }
 
   $http_request->header(Authorization => "Basic " . encode_base64($self->api_key()));
 

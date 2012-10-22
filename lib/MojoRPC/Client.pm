@@ -9,7 +9,7 @@ use MojoRPC::Client::Request;
 
 our $VERSION = '0.01';
 
-has [qw(base_url api_key last_request )];
+has [qw(base_url api_key last_request debug )];
 has object_class => "MojoRPC::Client::Object";
 
 sub call {
@@ -44,7 +44,8 @@ sub execute_chain {
 
   my $request_object = MojoRPC::Client::Request->new({
     api_key => $self->api_key,
-    request_path_builder => $chain
+    request_path_builder => $chain,
+    debug => $self->debug
   });
 
   $self->last_request( $request_object->send_request() );
