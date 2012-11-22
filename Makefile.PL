@@ -16,6 +16,7 @@ WriteMakefile(
       'Carp' => 0,
       'Data::Dumper' => 0,
       'URI::Escape' => 0,
+      'CHI' => 0
 
     }, # e.g., Module::Name => 1.1
     ($] >= 5.005 ?     ## Add these new keywords supported since 5.005

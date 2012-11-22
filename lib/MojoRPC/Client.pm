@@ -11,6 +11,8 @@ our $VERSION = '0.01';
 
 has [qw(base_url api_key last_request debug )];
 has object_class => "MojoRPC::Client::Object";
+has caching => 0;
+has chi => sub { CHI->new( driver => 'Memory' ) };
 
 sub call {
   my $self = shift;
@@ -18,8 +20,6 @@ sub call {
   
   return MojoRPC::Client::Query->_new( { _class => $class_name,  _client => $self } );
 }
-
-
 
 sub factory {
   my $self = shift;
@@ -36,6 +36,24 @@ sub factory {
   return $object;
 }
 
+sub _send_request {
+  my $self = shift;
+  my $request_object = shift;
+
+  my $cache_key = $request_object->cache_key;
+
+  if($self->caching && $self->chi && $cache_key) {
+    my $response = $self->chi->get($cache_key);
+    if(! defined $response) {
+      $response = $request_object->send_request();
+      $self->chi->set($cache_key, $response);
+    }
+    return $response;
+  }
+
+  return $request_object->send_request();
+}
+
 sub execute_chain {
   my $self = shift;
   my $chain = shift;
@@ -48,7 +66,7 @@ sub execute_chain {
     debug => $self->debug
   });
 
-  $self->last_request( $request_object->send_request() );
+  $self->last_request( $self->_send_request($request_object) );
 
   my $result = $request_object->parse_response($self->last_request());
 

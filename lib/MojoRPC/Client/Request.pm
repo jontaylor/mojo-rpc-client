@@ -10,6 +10,14 @@ use Encode qw(encode);
 
 has [qw( api_key request_path_builder debug)];
 
+sub cache_key {
+  my $self = shift;
+
+  my ($path, $post_params) = $self->request_path_builder->build();
+  return undef if $post_params;
+  return $path;
+}
+
 sub send_request {
   my $self = shift;
 
