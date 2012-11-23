@@ -12,7 +12,7 @@ our $VERSION = '0.01';
 has [qw(base_url api_key last_request debug )];
 has object_class => "MojoRPC::Client::Object";
 has caching => 0;
-has chi => sub { CHI->new( driver => 'Memory' ) };
+has chi => sub { CHI->new( driver => 'Memory', global=>1, expires_in => 60 ) };
 
 sub call {
   my $self = shift;
@@ -34,6 +34,24 @@ sub factory {
   $object->init($data) if $object->can('init');
 
   return $object;
+}
+
+sub without_cache_do {
+  my $self = shift;
+  my $sub = shift;
+
+  my $original_caching = $self->caching();
+  $self->caching(0);
+  if(wantarray) {
+    my @response = $sub->(); 
+    $self->caching($original_caching);
+    return @response;
+  }
+  else {
+    my $response = $sub->();
+    $self->caching($original_caching);
+    return $response;
+  }
 }
 
 sub _send_request {
