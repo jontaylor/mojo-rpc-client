@@ -45,7 +45,7 @@ sub send_request {
   my $response = $self->user_agent->request($http_request);
 
   unless($response->is_success()) {
-    carp "Request failed with " . $response->status_line;
+    croak "MojoRPC Request failed with " . $response->status_line . "\n" . $response->content;
   }
 
   return $response;
@@ -63,9 +63,9 @@ sub parse_response {
 
   if($@) {
     if($@ =~ /malformed JSON string/) {
-      die "Received a message from the server instead of JSON: " . $response->content;
+      croak "Received a message from the server instead of JSON: " . $response->content;
     }
-    die $@;
+    croak $@;
   }
 
   return $data;

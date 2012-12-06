@@ -6,8 +6,9 @@ use warnings;
 use Mojo::Base -base;
 use MojoRPC::Client::Query;
 use MojoRPC::Client::Request;
+use MojoRPC::Client::Response;
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 has [qw(base_url api_key last_request debug )];
 has object_class => "MojoRPC::Client::Object";
@@ -24,14 +25,14 @@ sub call {
 sub factory {
   my $self = shift;
   my $remote_class_name = shift;
-  my $data = shift || {};
+  my @data = @_;
 
   my $local_class_name = $self->object_class_to_use($remote_class_name);
 
   my $object = $local_class_name->_new();
   $object->mojo_rpc_client($self);
   $object->remote_class_name( $remote_class_name );
-  $object->init($data) if $object->can('init');
+  $object->init(@data) if $object->can('init');
 
   return $object;
 }
@@ -84,7 +85,7 @@ sub execute_chain {
     debug => $self->debug
   });
 
-  $self->last_request( $self->_send_request($request_object) );
+  $self->last_request( bless($self->_send_request($request_object), 'MojoRPC::Client::Response') );
 
   my $result = $request_object->parse_response($self->last_request());
 

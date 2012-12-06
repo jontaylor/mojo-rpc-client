@@ -32,7 +32,7 @@ sub init {
   my $self = shift;
   my $attributes = shift;
 
-  $self->_merge($attributes);
+  $self->_merge($attributes) if $attributes;
 }
 
 sub _merge {
