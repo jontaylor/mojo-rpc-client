@@ -10,3 +10,4 @@ lib/MojoRPC/Client/Request.pm
 lib/MojoRPC/Client/Response.pm
 lib/MojoRPC/Client/RequestPathBuilder.pm
 lib/MojoRPC/Client/Query.pm
+lib/MojoRPC/Test/Client.pm
