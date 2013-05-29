@@ -4,3 +4,5 @@ Revision history for Perl extension MojoRPC::Client.
 	- original version; created by h2xs 1.23 with options
 		-AX MojoRPC::Client -b 5.10.0
 
+0.03 Wed 29 May
+	- Fix an issue that was causing us to ignore wantarray when using CLASS_METHOD()

@@ -57,7 +57,7 @@ sub CLASS_METHOD {
     @other_params = (@other_params, @_);
 
     return $self->_handle_method_call(
-      { method => $method, parameters => \@other_params, wants => $wantarray ? '@' : '$', call_type => '::'  },
+      { method => $method, parameters => \@other_params, wants => ($wantarray || wantarray) ? '@' : '$', call_type => '::'  },
       { 'OBJECT' => $want_object,  }
 
     );
