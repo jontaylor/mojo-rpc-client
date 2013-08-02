@@ -29,11 +29,14 @@ sub send_request {
     $http_request->method('POST');
     #Below should be converted to a string of bytes
     $http_request->content("params=$post_params");
-    $http_request->header("Content-Type" => 'application/x-www-form-urlencoded');
+    $http_request->header("Content-Type" => 'application/x-www-form-urlencoded; charset="utf8"');
   }
   else {
+    $http_request->header("Content-Type" => 'application/json; charset="utf8"');
     $http_request->method('GET');
   }
+
+
 
   if($self->debug) {
     use Data::Dumper;
@@ -55,7 +58,7 @@ sub parse_response {
   my $self = shift;
   my $response = shift;
 
-  my $json = JSON::XS->new->allow_nonref;
+  my $json = JSON::XS->new->allow_nonref->utf8(1);
   my $data;
   eval {
     $data = $json->decode($response->content) ;
