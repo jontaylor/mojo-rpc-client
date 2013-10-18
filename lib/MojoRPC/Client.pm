@@ -7,6 +7,7 @@ use Mojo::Base -base;
 use MojoRPC::Client::Query;
 use MojoRPC::Client::Request;
 use MojoRPC::Client::Response;
+use Carp;
 
 our $VERSION = '0.04';
 
@@ -127,7 +128,7 @@ sub object_class_to_use {
     $class_name = $override || $class_name;
   }
 
-  eval "require $class_name";
+  eval "require $class_name" or croak "$class_name cannot be found, it either doesn't exist, or does not compile";
   return $class_name;
 }
 

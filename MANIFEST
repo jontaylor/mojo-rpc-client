@@ -3,6 +3,8 @@ Makefile.PL
 MANIFEST
 README
 t/MojoRPC-Client.t
+t/bug_with_mapped_module_that_doesnt_compile.t
+t/lib/TestClass/ModuleThatWontCompile.pm
 lib/MojoRPC/Client.pm
 lib/MojoRPC/Client/MethodCall.pm
 lib/MojoRPC/Client/Object.pm
