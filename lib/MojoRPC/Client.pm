@@ -9,12 +9,13 @@ use MojoRPC::Client::Request;
 use MojoRPC::Client::Response;
 use Carp;
 
-our $VERSION = '0.04';
+our $VERSION = '0.05';
 
 has [qw(base_url api_key last_request debug )];
 has object_class => "MojoRPC::Client::Object";
 has caching => 0;
 has chi => sub { CHI->new( driver => 'Memory', global=>1, expires_in => 60 ) };
+has timeout => 10;
 
 sub call {
   my $self = shift;
@@ -56,6 +57,26 @@ sub without_cache_do {
   }
 }
 
+sub with_timeout_do {
+  my $self = shift;
+  my $timeout = shift;
+  my $sub = shift;
+
+  my $original_timeout = $self->timeout();
+  $self->timeout($timeout);
+  if(wantarray) {
+    my @response = $sub->(); 
+    $self->timeout($original_timeout);
+    return @response;
+  }
+  else {
+    my $response = $sub->();
+    $self->timeout($original_timeout);
+    return $response;
+  }  
+}
+
+
 sub _send_request {
   my $self = shift;
   my $request_object = shift;
@@ -83,7 +104,8 @@ sub execute_chain {
   my $request_object = MojoRPC::Client::Request->new({
     api_key => $self->api_key,
     request_path_builder => $chain,
-    debug => $self->debug
+    debug => $self->debug,
+    timeout => $self->timeout,
   });
 
   $self->last_request( bless($self->_send_request($request_object), 'MojoRPC::Client::Response') );

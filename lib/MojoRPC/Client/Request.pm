@@ -8,7 +8,7 @@ use URI;
 use Carp;
 use Encode qw(encode);
 
-has [qw( api_key request_path_builder debug)];
+has [qw( api_key request_path_builder debug timeout)];
 
 sub cache_key {
   my $self = shift;
@@ -36,6 +36,7 @@ sub send_request {
     $http_request->method('GET');
   }
 
+  $http_request->header("RPC-Timeout" => $self->timeout);
 
 
   if($self->debug) {
