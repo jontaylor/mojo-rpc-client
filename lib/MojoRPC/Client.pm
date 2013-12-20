@@ -9,13 +9,14 @@ use MojoRPC::Client::Request;
 use MojoRPC::Client::Response;
 use Carp;
 
-our $VERSION = '0.05';
+our $VERSION = '0.06';
 
 has [qw(base_url api_key last_request debug )];
 has object_class => "MojoRPC::Client::Object";
 has caching => 0;
 has chi => sub { CHI->new( driver => 'Memory', global=>1, expires_in => 60 ) };
 has timeout => 10;
+has gzip => 0;
 
 sub call {
   my $self = shift;
@@ -106,6 +107,7 @@ sub execute_chain {
     request_path_builder => $chain,
     debug => $self->debug,
     timeout => $self->timeout,
+    gzip => $self->gzip
   });
 
   $self->last_request( bless($self->_send_request($request_object), 'MojoRPC::Client::Response') );

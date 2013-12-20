@@ -7,8 +7,9 @@ use LWP;
 use URI;
 use Carp;
 use Encode qw(encode);
+use HTTP::Message;
 
-has [qw( api_key request_path_builder debug timeout)];
+has [qw( api_key request_path_builder debug timeout gzip)];
 
 sub cache_key {
   my $self = shift;
@@ -16,6 +17,14 @@ sub cache_key {
   my ($path, $post_params) = $self->request_path_builder->build();
   return undef if $post_params;
   return $path;
+}
+
+sub should_request_gzip_response {
+  my $self = shift;
+
+  return 0 unless $self->gzip;
+  return 1 if HTTP::Message::decodable() =~ /gzip/;
+
 }
 
 sub send_request {
@@ -36,6 +45,10 @@ sub send_request {
     $http_request->method('GET');
   }
 
+  if($self->should_request_gzip_response) {
+    $http_request->header('Accept-Encoding' => 'gzip');
+  }
+
   $http_request->header("RPC-Timeout" => $self->timeout);
 
 
@@ -49,7 +62,7 @@ sub send_request {
   my $response = $self->user_agent->request($http_request);
 
   unless($response->is_success()) {
-    croak "MojoRPC Request failed with " . $response->status_line . "\n" . $response->content;
+    croak "MojoRPC Request failed with " . $response->status_line . "\n" . $response->decoded_content(charset => 'none');
   }
 
   return $response;
@@ -62,12 +75,12 @@ sub parse_response {
   my $json = JSON::XS->new->allow_nonref->utf8(1);
   my $data;
   eval {
-    $data = $json->decode($response->content) ;
+    $data = $json->decode($response->decoded_content(charset => 'none')) ;
   };
 
   if($@) {
     if($@ =~ /malformed JSON string/) {
-      croak "Received a message from the server instead of JSON: " . $response->content;
+      croak "Received a message from the server instead of JSON: " . $response->decoded_content(charset => 'none');
     }
     croak $@;
   }
