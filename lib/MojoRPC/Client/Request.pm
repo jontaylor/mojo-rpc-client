@@ -9,7 +9,7 @@ use Carp;
 use Encode qw(encode);
 use HTTP::Message;
 
-has [qw( api_key request_path_builder debug timeout gzip)];
+has [qw( api_key request_path_builder debug timeout gzip raw)];
 
 sub cache_key {
   my $self = shift;
@@ -25,6 +25,12 @@ sub should_request_gzip_response {
   return 0 unless $self->gzip;
   return 1 if HTTP::Message::decodable() =~ /gzip/;
 
+}
+
+sub supports_raw {
+  my $self = shift;
+  return 0 unless $self->raw;
+  return 1;
 }
 
 sub send_request {
@@ -49,6 +55,10 @@ sub send_request {
     $http_request->header('Accept-Encoding' => 'gzip');
   }
 
+  if($self->supports_raw) {
+    $http_request->header('Accept' => 'application/octet-stream');
+  }
+
   $http_request->header("RPC-Timeout" => $self->timeout);
 
 
@@ -71,6 +81,8 @@ sub send_request {
 sub parse_response {
   my $self = shift;
   my $response = shift;
+
+  return $response->decoded_content(charset => 'none') if $response->header('Content-Type') eq "application/octet-stream"; #Raw data doesn't need parsing
 
   my $json = JSON::XS->new->allow_nonref->utf8(1);
   my $data;

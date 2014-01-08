@@ -9,7 +9,7 @@ use MojoRPC::Client::Request;
 use MojoRPC::Client::Response;
 use Carp;
 
-our $VERSION = '0.06';
+our $VERSION = '0.07';
 
 has [qw(base_url api_key last_request debug )];
 has object_class => "MojoRPC::Client::Object";
@@ -17,6 +17,7 @@ has caching => 0;
 has chi => sub { CHI->new( driver => 'Memory', global=>1, expires_in => 60 ) };
 has timeout => 10;
 has gzip => 0;
+has accept_raw => 1;
 
 sub call {
   my $self = shift;
@@ -107,12 +108,16 @@ sub execute_chain {
     request_path_builder => $chain,
     debug => $self->debug,
     timeout => $self->timeout,
-    gzip => $self->gzip
+    gzip => $self->gzip,
+    raw => $self->raw
   });
 
   $self->last_request( bless($self->_send_request($request_object), 'MojoRPC::Client::Response') );
 
   my $result = $request_object->parse_response($self->last_request());
+
+  #Shortcut out if its raw data
+  return $result unless ref($result);
 
   if($result->{class}) { 
     #We got an object back anyway, so lets give the user an object of the right kind
