@@ -9,7 +9,7 @@ use Carp;
 use Encode qw(encode);
 use HTTP::Message;
 
-has [qw( api_key request_path_builder debug timeout gzip raw)];
+has [qw( api_key request_path_builder debug timeout gzip accept_raw)];
 
 sub cache_key {
   my $self = shift;
@@ -29,7 +29,7 @@ sub should_request_gzip_response {
 
 sub supports_raw {
   my $self = shift;
-  return 0 unless $self->raw;
+  return 0 unless $self->accept_raw;
   return 1;
 }
 

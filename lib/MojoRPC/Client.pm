@@ -109,7 +109,7 @@ sub execute_chain {
     debug => $self->debug,
     timeout => $self->timeout,
     gzip => $self->gzip,
-    raw => $self->raw
+    accept_raw => $self->accept_raw
   });
 
   $self->last_request( bless($self->_send_request($request_object), 'MojoRPC::Client::Response') );
