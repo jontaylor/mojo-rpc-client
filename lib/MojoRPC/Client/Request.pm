@@ -8,6 +8,7 @@ use URI;
 use Carp;
 use Encode qw(encode);
 use HTTP::Message;
+use Data::Dumper;
 
 has [qw( api_key request_path_builder debug timeout gzip accept_raw)];
 
@@ -63,7 +64,6 @@ sub send_request {
 
 
   if($self->debug) {
-    use Data::Dumper;
     print STDERR Dumper $path;
   }
 
@@ -72,7 +72,7 @@ sub send_request {
   my $response = $self->user_agent->request($http_request);
 
   unless($response->is_success()) {
-    croak "MojoRPC Request failed with " . $response->status_line . "\n" . $response->decoded_content(charset => 'none');
+    croak "MojoRPC Request failed with " . $response->status_line . "\n" . $response->decoded_content(charset => 'none') . "\n" . Dumper($http_request);
   }
 
   return $response;

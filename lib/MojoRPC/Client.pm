@@ -9,7 +9,7 @@ use MojoRPC::Client::Request;
 use MojoRPC::Client::Response;
 use Carp;
 
-our $VERSION = '0.07';
+our $VERSION = '0.08';
 
 has [qw(base_url api_key last_request debug )];
 has object_class => "MojoRPC::Client::Object";
