@@ -72,7 +72,7 @@ sub send_request {
   my $response = $self->user_agent->request($http_request);
 
   unless($response->is_success()) {
-    croak "MojoRPC Request failed with " . $response->status_line . "\n" . $response->decoded_content(charset => 'none') . "\nPath: $path" ;
+    confess "MojoRPC Request failed with " . $response->status_line . "\n" . $response->decoded_content(charset => 'none') . "\nPath: $path" ;
   }
 
   return $response;
