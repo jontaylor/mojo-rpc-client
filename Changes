@@ -6,3 +6,6 @@ Revision history for Perl extension MojoRPC::Client.
 
 0.03 Wed 29 May
 	- Fix an issue that was causing us to ignore wantarray when using CLASS_METHOD()
+
+0.11 Fri 3 Oct 2014
+  - Add TO_JSON on all objects by default

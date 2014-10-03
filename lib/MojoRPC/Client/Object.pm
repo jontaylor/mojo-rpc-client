@@ -78,6 +78,21 @@ sub _rpc_call {
   }
 }
 
+sub TO_JSON {
+  my $self = shift;
+
+  my $attributes_array_ref = $self->{_attributes} || [];
+
+  my %hash = ();
+
+  foreach my $attribute(@$attributes_array_ref) {
+    $hash{$attribute} = $self->{$attribute};
+  }
+
+  return \%hash;
+}
+
+
 sub DESTROY {}
 
 1;
